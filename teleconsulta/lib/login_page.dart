@@ -1,60 +1,75 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'main.dart'; // Importa o main para acessar MyHomePage
+import 'main.dart'; 
 
+/// Página de login do aplicativo.
 class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
   @override
+  // ignore: library_private_types_in_public_api
   _LoginPageState createState() => _LoginPageState();
 }
 
+/// Estado da página de login.
 class _LoginPageState extends State<LoginPage> {
+  // Controladores de texto para os campos de email e senha.
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
+  // Instância do FirebaseAuth para autenticação.
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
+  /// Método para registrar um novo usuário.
   Future<void> _register() async {
     try {
+      // Cria um novo usuário com email e senha fornecidos.
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
 
-      // Adicionando o usuário ao Realtime Database
+      // Adiciona o usuário ao Realtime Database.
       DatabaseReference usersRef = FirebaseDatabase.instance.ref().child('users');
       usersRef.child(userCredential.user!.uid).set({
         'email': _emailController.text.trim(),
         'createdAt': DateTime.now().toIso8601String(),
       });
 
+      // Mensagem de sucesso ao criar conta.
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Account created successfully!')),
+        const SnackBar(content: Text('Conta criada com sucesso!')),
       );
     } catch (e) {
+      // Mensagem de erro ao criar conta.
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to create account: $e')),
+        SnackBar(content: Text('Falha ao criar conta: $e')),
       );
     }
   }
 
+  /// Método para realizar login.
   Future<void> _login() async {
     try {
+      // Realiza login com email e senha fornecidos.
       await _auth.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
+      // Mensagem de sucesso ao fazer login.
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Logged in successfully!')),
+        const SnackBar(content: Text('Login realizado com sucesso!')),
       );
-      // Navegue para a próxima página (ex: MyHomePage)
+      // Navega para a próxima página (ex: MyHomePage).
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => MyHomePage(title: 'Flutter Demo Home Page')),
+        MaterialPageRoute(builder: (context) => const MyHomePage(title: 'Página Inicial')),
       );
     } catch (e) {
+      // Mensagem de erro ao fazer login.
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to login: $e')),
+        SnackBar(content: Text('Falha ao fazer login: $e')),
       );
     }
   }
@@ -63,30 +78,34 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Login Page'),
+        title: const Text('Página de Login'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
+            // Campo para inserir email.
             TextField(
               controller: _emailController,
-              decoration: InputDecoration(labelText: 'Email'),
+              decoration: const InputDecoration(labelText: 'Email'),
             ),
+            // Campo para inserir senha.
             TextField(
               controller: _passwordController,
-              decoration: InputDecoration(labelText: 'Password'),
+              decoration: const InputDecoration(labelText: 'Senha'),
               obscureText: true,
             ),
-            SizedBox(height: 20),
+            const SizedBox(height: 20),
+            // Botão para fazer login.
             ElevatedButton(
               onPressed: _login,
-              child: Text('Login'),
+              child: const Text('Entrar'),
             ),
+            // Botão para registrar.
             ElevatedButton(
               onPressed: _register,
-              child: Text('Register'),
+              child: const Text('Registrar'),
             ),
           ],
         ),

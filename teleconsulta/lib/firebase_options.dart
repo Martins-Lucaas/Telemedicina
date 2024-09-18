@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 
+/// Classe que fornece as opções padrão de configuração do Firebase.
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     return const FirebaseOptions(
