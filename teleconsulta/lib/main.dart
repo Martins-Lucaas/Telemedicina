@@ -86,6 +86,12 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title), // Define o título do AppBar.
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back), // Ícone de voltar.
+          onPressed: () {
+            Navigator.pop(context); // Volta para a página anterior (LoginPage).
+          },
+        ),
       ),
       body: Center(
         child: Column(
