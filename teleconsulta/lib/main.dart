@@ -45,7 +45,7 @@ class MyHomePage extends StatefulWidget {
 // Estado da classe MyHomePage.
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0; // Inicializa um contador.
-  String? _userEmail; // Armazena o e-mail do usuário.
+  Map<String, dynamic>? _userData; // Armazena os dados do usuário.
 
   // Referência ao banco de dados do Firebase.
   final DatabaseReference _databaseReference = FirebaseDatabase.instance.ref();
@@ -60,24 +60,50 @@ class _MyHomePageState extends State<MyHomePage> {
   void _loadUserData() {
     User? user = FirebaseAuth.instance.currentUser; // Obtém o usuário atual.
     if (user != null) {
-      // Cria uma referência ao nó 'users' no banco de dados.
-      DatabaseReference userRef = _databaseReference.child('users').child(user.uid);
+      // Primeiro, verifica se o usuário está no nó 'medicos'.
+      DatabaseReference userRef = _databaseReference.child('users/medicos').child(user.uid);
       userRef.once().then((DatabaseEvent event) {
-        setState(() {
-          // Atualiza o estado com o e-mail do usuário.
-          _userEmail = event.snapshot.child('email').value.toString();
-        });
+        if (event.snapshot.exists) {
+          // Usuário encontrado no nó 'medicos'.
+          setState(() {
+            _userData = Map<String, dynamic>.from(event.snapshot.value as Map);
+            _userData!['userType'] = 'Médico'; // Adiciona o tipo de usuário manualmente.
+            _counter = _userData!['counter'] ?? 0; // Carrega o contador do banco de dados.
+          });
+        } else {
+          // Se não for encontrado em 'medicos', verifica em 'pacientes'.
+          userRef = _databaseReference.child('users/pacientes').child(user.uid);
+          userRef.once().then((DatabaseEvent event) {
+            if (event.snapshot.exists) {
+              // Usuário encontrado no nó 'pacientes'.
+              setState(() {
+                _userData = Map<String, dynamic>.from(event.snapshot.value as Map);
+                _userData!['userType'] = 'Paciente'; // Adiciona o tipo de usuário manualmente.
+                _counter = _userData!['counter'] ?? 0; // Carrega o contador do banco de dados.
+              });
+            }
+          });
+        }
       });
     }
   }
 
   // Método para incrementar o contador.
   void _incrementCounter() {
-    setState(() {
-      _counter++; // Incrementa o contador.
-      // Atualiza o valor do contador no banco de dados.
-      _databaseReference.child('counter').set(_counter);
-    });
+    if (_userData != null) {
+      setState(() {
+        _counter++; // Incrementa o contador.
+        User? user = FirebaseAuth.instance.currentUser;
+
+        if (user != null) {
+          // Atualiza o valor do contador no banco de dados para o usuário específico.
+          String userType = _userData!['userType'] == 'Médico' ? 'medicos' : 'pacientes';
+          _databaseReference.child('users').child(userType).child(user.uid).update({
+            'counter': _counter,
+          });
+        }
+      });
+    }
   }
 
   @override
@@ -89,7 +115,12 @@ class _MyHomePageState extends State<MyHomePage> {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back), // Ícone de voltar.
           onPressed: () {
-            Navigator.pop(context); // Volta para a página anterior (LoginPage).
+            // Volta para a página de login e remove todas as rotas anteriores.
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(builder: (context) => const LoginPage()),
+              (Route<dynamic> route) => false,
+            );
           },
         ),
       ),
@@ -97,10 +128,33 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            // Exibe o e-mail do usuário ou uma mensagem de carregando.
-            Text(
-              _userEmail != null ? 'Logado como: $_userEmail' : 'Carregando...',
-            ),
+            // Exibe as informações do usuário ou uma mensagem de carregando.
+            if (_userData != null) ...[
+              Text(
+                'Nome: ${_userData!['name']}',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              Text(
+                'E-mail: ${_userData!['email']}',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              Text(
+                'Tipo de Usuário: ${_userData!['userType']}',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+              if (_userData!['userType'] == 'Médico') // Exibe o CRM se o usuário for médico.
+                Text(
+                  'CRM: ${_userData!['crm'] ?? 'N/A'}', // Verifica se o CRM existe.
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
+              Text(
+                'Data de Nascimento: ${_userData!['dateOfBirth']}',
+                style: Theme.of(context).textTheme.bodyLarge,
+              ),
+            ] else ...[
+              const Text('Carregando informações do usuário...'),
+            ],
+            const SizedBox(height: 20),
             const Text(
               'Você pressionou o botão esta quantidade de vezes:',
             ),

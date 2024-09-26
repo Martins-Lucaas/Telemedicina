@@ -67,6 +67,18 @@ class _RegisterPageState extends State<RegisterPage> {
 
   Future<void> _register() async {
     try {
+      // Validação do CRM apenas se o usuário for do tipo "Médico".
+      if (_selectedUserType == 'Médico') {
+        String crm = _crmController.text.trim();
+        RegExp crmRegex = RegExp(r'^CRM/[A-Z]{2} \d{6}$');
+        if (!crmRegex.hasMatch(crm)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('CRM inválido. Deve ser no formato: CRM/UF 123456')),
+          );
+          return;
+        }
+      }
+
       // Cria o usuário no Firebase Authentication.
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: _emailController.text.trim(),
