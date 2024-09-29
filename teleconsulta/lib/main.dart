@@ -1,4 +1,3 @@
-// Importa os pacotes necessários.
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
@@ -6,16 +5,13 @@ import 'firebase_options.dart';
 import 'login_page.dart';
 import 'package:firebase_database/firebase_database.dart';
 
-// Função principal que inicializa o aplicativo.
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Garante que os widgets do Flutter estejam vinculados.
+  WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp( // Inicializa o Firebase com as opções atuais da plataforma.
     options: DefaultFirebaseOptions.currentPlatform,
   );
   runApp(const MyApp()); // Executa o aplicativo.
 }
-
-// Classe principal do aplicativo.
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -24,15 +20,13 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple), // Define o tema do aplicativo.
-        useMaterial3: true,
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
       home: const LoginPage(), // Define a página inicial como a página de login.
     );
   }
 }
 
-// Classe para a página inicial do aplicativo.
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});
 
@@ -42,7 +36,6 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-// Estado da classe MyHomePage.
 class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0; // Inicializa um contador.
   Map<String, dynamic>? _userData; // Armazena os dados do usuário.
@@ -56,7 +49,6 @@ class _MyHomePageState extends State<MyHomePage> {
     _loadUserData(); // Carrega os dados do usuário ao inicializar o estado.
   }
 
-  // Método para carregar os dados do usuário.
   void _loadUserData() {
     User? user = FirebaseAuth.instance.currentUser; // Obtém o usuário atual.
     if (user != null) {

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_database/firebase_database.dart';
 import 'main.dart';
-import 'register_page.dart';  // Importa a nova página de registro.
+import 'register_page.dart'; // Importa a nova página de registro
+import 'patient_page.dart'; // Importa a página dos pacientes
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -14,6 +16,7 @@ class _LoginPageState extends State<LoginPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final DatabaseReference _databaseReference = FirebaseDatabase.instance.ref();
 
   bool _isHoveringLogin = false;
   bool _isHoveringRegister = false;
@@ -26,13 +29,26 @@ class _LoginPageState extends State<LoginPage> {
         email: _emailController.text.trim(),
         password: _passwordController.text.trim(),
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Login realizado com sucesso!')),
-      );
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const MyHomePage(title: 'Página Inicial')),
-      );
+      User? user = _auth.currentUser;
+
+      if (user != null) {
+        DatabaseReference userRef = _databaseReference.child('users/pacientes').child(user.uid);
+        userRef.once().then((DatabaseEvent event) {
+          if (event.snapshot.exists) {
+            // Redireciona para a página específica para pacientes
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const PatientPage()),
+            );
+          } else {
+            // Redireciona para a página inicial (caso não seja paciente)
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const MyHomePage(title: 'Página Inicial')),
+            );
+          }
+        });
+      }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Falha ao fazer login: $e')),
@@ -181,7 +197,7 @@ class _LoginPageState extends State<LoginPage> {
                             setState(() => _isPressedRegister = false);
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => const RegisterPage()),  // Navega para a página de registro.
+                              MaterialPageRoute(builder: (context) => const RegisterPage()), // Navega para a página de registro
                             );
                           },
                           child: AnimatedContainer(
