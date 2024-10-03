@@ -23,11 +23,11 @@ class WhatsAppHelper {
     DateTime consultationDateTime = DateTime.parse('$date $time');
 
     // Um dia antes da consulta
-    DateTime oneDayBefore = consultationDateTime.subtract(Duration(days: 1));
+    DateTime oneDayBefore = consultationDateTime.subtract(const Duration(days: 1));
     _scheduleNotification(oneDayBefore, phoneNumber, 'Lembrete: Sua consulta em $specialty é amanhã às $time.');
 
     // Uma hora antes da consulta
-    DateTime oneHourBefore = consultationDateTime.subtract(Duration(hours: 1));
+    DateTime oneHourBefore = consultationDateTime.subtract(const Duration(hours: 1));
     _scheduleNotification(oneHourBefore, phoneNumber, 'Lembrete: Sua consulta em $specialty é em uma hora, às $time.');
   }
 

@@ -7,7 +7,6 @@ class ConsultationsPage extends StatefulWidget {
   const ConsultationsPage({super.key});
 
   @override
-  // ignore: library_private_types_in_public_api
   _ConsultationsPageState createState() => _ConsultationsPageState();
 }
 
@@ -27,8 +26,8 @@ class _ConsultationsPageState extends State<ConsultationsPage> {
   Future<void> _loadPatientName() async {
     User? user = _auth.currentUser;
     if (user != null) {
-      DatabaseReference userRef = _databaseReference.child('users/pacientes').child(user.uid);
-      final snapshot = await userRef.child('name').get();
+      DatabaseReference userRef = _databaseReference.child('users/patients').child(user.uid);
+      final snapshot = await userRef.child('nomeCompleto').get(); // Atualizado para refletir a nova estrutura
       if (snapshot.exists) {
         setState(() {
           _patientName = snapshot.value.toString();
@@ -40,18 +39,19 @@ class _ConsultationsPageState extends State<ConsultationsPage> {
   Future<void> _fetchConsultations() async {
     User? user = _auth.currentUser;
     if (user != null) {
-      DatabaseReference consultationsRef = _databaseReference.child('users/pacientes').child(user.uid).child('consultations');
+      DatabaseReference consultationsRef = _databaseReference.child('users/patients').child(user.uid).child('consultations');
       final snapshot = await consultationsRef.get();
       if (snapshot.exists) {
         List<Map<String, dynamic>> consultations = [];
         Map<dynamic, dynamic> data = snapshot.value as Map<dynamic, dynamic>;
         data.forEach((key, value) {
           consultations.add({
-            'id': key, // Store the consultation ID for later deletion
-            'specialty': value['specialty'],
-            'date': value['date'],
-            'time': value['time'],
-            'status': value['status'] ?? 'Agendado', // Default to "Agendado"
+            'id': key, // Armazena o ID da consulta para cancelamento posterior
+            'specialty': value['specialty'] ?? 'Especialidade não disponível',
+            'date': value['date'] ?? 'Data não disponível',
+            'convenio': value['convenio'] ?? 'Convênio não disponível',
+            'phone': value['phone'] ?? 'Telefone não disponível',
+            'status': value['status'] ?? 'Agendado', // Padrão é "Agendado"
           });
         });
 
@@ -65,7 +65,7 @@ class _ConsultationsPageState extends State<ConsultationsPage> {
   Future<void> _cancelConsultation(String consultationId) async {
     User? user = _auth.currentUser;
     if (user != null) {
-      DatabaseReference consultationRef = _databaseReference.child('users/pacientes').child(user.uid).child('consultations').child(consultationId);
+      DatabaseReference consultationRef = _databaseReference.child('users/patients').child(user.uid).child('consultations').child(consultationId);
       await consultationRef.remove();
       _fetchConsultations();
     }
@@ -81,14 +81,14 @@ class _ConsultationsPageState extends State<ConsultationsPage> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.of(context).pop(); // Fechar o pop-up
+                Navigator.of(context).pop(); // Fecha o pop-up
               },
               child: const Text('Não'),
             ),
             TextButton(
               onPressed: () {
                 _cancelConsultation(consultationId);
-                Navigator.of(context).pop(); // Fechar o pop-up após confirmar
+                Navigator.of(context).pop(); // Fecha o pop-up após confirmar
               },
               child: const Text('Sim'),
             ),
@@ -161,7 +161,7 @@ class _ConsultationsPageState extends State<ConsultationsPage> {
                       scrollDirection: Axis.horizontal,
                       child: DataTable(
                         columnSpacing: 30, // Espaçamento entre as colunas
-                        headingRowColor: WidgetStateColor.resolveWith((states) => const Color(0xFF149393)),
+                        headingRowColor: MaterialStateColor.resolveWith((states) => const Color(0xFF149393)),
                         columns: const [
                           DataColumn(
                             label: Text(
@@ -177,7 +177,7 @@ class _ConsultationsPageState extends State<ConsultationsPage> {
                           ),
                           DataColumn(
                             label: Text(
-                              'Horário',
+                              'Convênio',
                               style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                             ),
                           ),
@@ -199,7 +199,7 @@ class _ConsultationsPageState extends State<ConsultationsPage> {
                             cells: [
                               DataCell(Text(consultation['specialty'], style: const TextStyle(fontSize: 16))),
                               DataCell(Text(consultation['date'], style: const TextStyle(fontSize: 16))),
-                              DataCell(Text(consultation['time'], style: const TextStyle(fontSize: 16))),
+                              DataCell(Text(consultation['convenio'], style: const TextStyle(fontSize: 16))),
                               DataCell(Text(consultation['status'], style: const TextStyle(fontSize: 16))),
                               DataCell(
                                 ElevatedButton(

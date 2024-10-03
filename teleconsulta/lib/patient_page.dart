@@ -25,8 +25,8 @@ class _PatientPageState extends State<PatientPage> {
   Future<void> _loadPatientName() async {
     User? user = _auth.currentUser;
     if (user != null) {
-      DatabaseReference userRef = _databaseReference.child('users/pacientes').child(user.uid);
-      final snapshot = await userRef.child('name').get();
+      DatabaseReference userRef = _databaseReference.child('users/patients').child(user.uid);
+      final snapshot = await userRef.child('nomeCompleto').get();
       if (snapshot.exists) {
         setState(() {
           _patientName = snapshot.value.toString();
@@ -93,7 +93,7 @@ class _PatientPageState extends State<PatientPage> {
 
   Widget _buildMenuButton(String text) {
     return SizedBox(
-      width: 200, // Define o tamanho do botão como quadrado
+      width: 200,
       height: 200,
       child: ElevatedButton(
         onPressed: () {
@@ -103,12 +103,12 @@ class _PatientPageState extends State<PatientPage> {
               MaterialPageRoute(builder: (context) => const ConsultationsPage()),
             );
           }
-          // Você pode adicionar navegação para outras páginas aqui
+          // Adicione navegação para outras páginas aqui, se necessário.
         },
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF149393),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(0), // Remove os cantos arredondados
+            borderRadius: BorderRadius.circular(0),
           ),
         ),
         child: Text(

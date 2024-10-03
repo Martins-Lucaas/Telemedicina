@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
-import 'main.dart';
-import 'register_page.dart'; // Importa a nova página de registro
-import 'patient_page.dart'; // Importa a página dos pacientes
+import 'register_page.dart';
+import 'patient_page.dart';
+import 'doctor_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -32,22 +32,24 @@ class _LoginPageState extends State<LoginPage> {
       User? user = _auth.currentUser;
 
       if (user != null) {
-        DatabaseReference userRef = _databaseReference.child('users/pacientes').child(user.uid);
-        userRef.once().then((DatabaseEvent event) {
-          if (event.snapshot.exists) {
-            // Redireciona para a página específica para pacientes
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const PatientPage()),
-            );
-          } else {
-            // Redireciona para a página inicial (caso não seja paciente)
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(builder: (context) => const MyHomePage(title: 'Página Inicial')),
-            );
-          }
-        });
+        // Verifica se o usuário é um paciente
+        DatabaseReference patientRef = _databaseReference.child('users/patients').child(user.uid);
+        DatabaseEvent event = await patientRef.once();
+
+        if (event.snapshot.exists) {
+          // Redireciona para a página específica para pacientes
+          Navigator.pushReplacement(
+            // ignore: use_build_context_synchronously
+            context,
+            MaterialPageRoute(builder: (context) => const PatientPage()),
+          );
+        } else {
+          // Redireciona para a página específica para médicos
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const DoctorPage()),
+          );
+        }
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
