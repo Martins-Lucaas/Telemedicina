@@ -15,6 +15,11 @@ class _RegisterPageState extends State<RegisterPage> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _dateOfBirthController = TextEditingController();
+  final _ageController = TextEditingController(); // Controlador para a idade
+  final _weightController = TextEditingController(); // Controlador para o peso
+  final _heightController = TextEditingController(); // Controlador para a altura
+  final _rgController = TextEditingController(); // Controlador para o RG
+  final _addressController = TextEditingController(); // Controlador para o endereço
   final _crmController = TextEditingController();
   final _specialtyController = TextEditingController(); // Controlador para a especialidade
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -32,64 +37,6 @@ class _RegisterPageState extends State<RegisterPage> {
     if (pickedDate != null) {
       setState(() {
         _dateOfBirthController.text = DateFormat('dd/MM/yyyy').format(pickedDate);
-      });
-    }
-  }
-
-  void _formatDateOfBirth(String value) {
-    String digitsOnly = value.replaceAll(RegExp(r'[^0-9]'), '');
-
-    if (digitsOnly.length > 8) {
-      digitsOnly = digitsOnly.substring(0, 8);
-    }
-
-    String formattedDate = '';
-    for (int i = 0; i < digitsOnly.length; i++) {
-      if (i == 2 || i == 4) {
-        formattedDate += '/';
-      }
-      formattedDate += digitsOnly[i];
-    }
-
-    _dateOfBirthController.text = formattedDate;
-    _dateOfBirthController.selection = TextSelection.fromPosition(
-      TextPosition(offset: _dateOfBirthController.text.length),
-    );
-  }
-
-  Future<void> _selectSpecialty() async {
-    List<String> specialties = [
-      'Cardiologia',
-      'Dermatologia',
-      'Endocrinologia',
-      'Gastroenterologia',
-      'Geriatria',
-      'Neurologia',
-      'Oftalmologia',
-      'Pediatria',
-      'Psiquiatria',
-    ];
-
-    String? selectedSpecialty = await showDialog<String>(
-      context: context,
-      builder: (BuildContext context) {
-        return SimpleDialog(
-          title: const Text('Selecione uma Especialidade'),
-          children: specialties.map((String specialty) {
-            return SimpleDialogOption(
-              onPressed: () {
-                Navigator.pop(context, specialty);
-              },
-              child: Text(specialty),
-            );
-          }).toList(),
-        );
-      },
-    );
-
-    if (selectedSpecialty != null) {
-      setState(() {
-        _specialtyController.text = selectedSpecialty;
       });
     }
   }
@@ -127,6 +74,11 @@ class _RegisterPageState extends State<RegisterPage> {
           'nomeCompleto': _nameController.text.trim(),
           'email': _emailController.text.trim(),
           'dataNascimento': _dateOfBirthController.text.trim(),
+          'idade': _ageController.text.trim(),
+          'peso': _weightController.text.trim(),
+          'altura': _heightController.text.trim(),
+          'rg': _rgController.text.trim(),
+          'endereco': _addressController.text.trim(),
           'createdAt': DateTime.now().toIso8601String(),
         });
       }
@@ -154,99 +106,153 @@ class _RegisterPageState extends State<RegisterPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Registrar Conta'),
+        backgroundColor: const Color(0xFF149393),
+        title: const Text('Registrar Conta', style: TextStyle(color: Colors.white)),
+        elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              const Text(
-                'Selecione o tipo de usuário:',
-                style: TextStyle(fontSize: 18),
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  ElevatedButton(
-                    onPressed: () => _selectUserType('Médico'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _selectedUserType == 'Médico' ? Colors.green : Colors.grey,
-                    ),
-                    child: const Text('Médico'),
-                  ),
-                  const SizedBox(width: 20),
-                  ElevatedButton(
-                    onPressed: () => _selectUserType('Paciente'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: _selectedUserType == 'Paciente' ? Colors.blue : Colors.grey,
-                    ),
-                    child: const Text('Paciente'),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 30),
-
-              if (_showRegistrationForm) ...[
-                TextField(
-                  controller: _nameController,
-                  decoration: const InputDecoration(labelText: 'Nome Completo'),
+      body: Container(
+        color: Colors.white,
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Text(
+                  'Selecione o tipo de usuário:',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF149393)),
+                  textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: _emailController,
-                  decoration: const InputDecoration(labelText: 'E-mail'),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: _passwordController,
-                  decoration: const InputDecoration(labelText: 'Senha'),
-                  obscureText: true,
-                ),
-                const SizedBox(height: 10),
-
-                TextField(
-                  controller: _dateOfBirthController,
-                  decoration: InputDecoration(
-                    labelText: 'Data de Nascimento',
-                    suffixIcon: IconButton(
-                      icon: const Icon(Icons.calendar_today),
-                      onPressed: () => _selectDate(context),
-                    ),
-                    hintText: 'dd/mm/aaaa',
-                  ),
-                  keyboardType: TextInputType.datetime,
-                  onChanged: _formatDateOfBirth,
-                ),
-
-                if (_selectedUserType == 'Médico') ...[
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: _crmController,
-                    decoration: const InputDecoration(labelText: 'CRM'),
-                  ),
-                  const SizedBox(height: 10),
-                  TextField(
-                    controller: _specialtyController,
-                    decoration: const InputDecoration(
-                      labelText: 'Especialidade',
-                      suffixIcon: Icon(Icons.arrow_drop_down),
-                    ),
-                    onTap: _selectSpecialty,
-                    readOnly: true,
-                  ),
-                ],
-
                 const SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: _register,
-                  child: const Text('Registrar'),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    GestureDetector(
+                      onTap: () => _selectUserType('Médico'),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+                        decoration: BoxDecoration(
+                          color: _selectedUserType == 'Médico' ? const Color(0xFF149393) : Colors.grey[200],
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              spreadRadius: 2,
+                              blurRadius: 5,
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          'Médico',
+                          style: TextStyle(
+                            color: _selectedUserType == 'Médico' ? Colors.white : Colors.black,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () => _selectUserType('Paciente'),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
+                        decoration: BoxDecoration(
+                          color: _selectedUserType == 'Paciente' ? const Color(0xFF149393) : Colors.grey[200],
+                          borderRadius: BorderRadius.circular(20),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              spreadRadius: 2,
+                              blurRadius: 5,
+                            ),
+                          ],
+                        ),
+                        child: Text(
+                          'Paciente',
+                          style: TextStyle(
+                            color: _selectedUserType == 'Paciente' ? Colors.white : Colors.black,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ]
-            ],
+                const SizedBox(height: 30),
+
+                if (_showRegistrationForm) ...[
+                  _buildTextField(_nameController, 'Nome Completo', Icons.person),
+                  const SizedBox(height: 15),
+                  _buildTextField(_emailController, 'E-mail', Icons.email),
+                  const SizedBox(height: 15),
+                  _buildTextField(_passwordController, 'Senha', Icons.lock, obscureText: true),
+                  const SizedBox(height: 15),
+                  _buildTextField(_dateOfBirthController, 'Data de Nascimento', Icons.calendar_today,
+                      onTap: () => _selectDate(context), readOnly: true),
+                  if (_selectedUserType == 'Paciente') ...[
+                    const SizedBox(height: 15),
+                    _buildTextField(_ageController, 'Idade', Icons.cake),
+                    const SizedBox(height: 15),
+                    _buildTextField(_weightController, 'Peso (kg)', Icons.monitor_weight),
+                    const SizedBox(height: 15),
+                    _buildTextField(_heightController, 'Altura (cm)', Icons.height),
+                    const SizedBox(height: 15),
+                    _buildTextField(_rgController, 'RG', Icons.perm_identity),
+                    const SizedBox(height: 15),
+                    _buildTextField(_addressController, 'Endereço', Icons.location_on),
+                  ],
+                  if (_selectedUserType == 'Médico') ...[
+                    const SizedBox(height: 15),
+                    _buildTextField(_crmController, 'CRM', Icons.badge),
+                    const SizedBox(height: 15),
+                    _buildTextField(_specialtyController, 'Especialidade', Icons.arrow_drop_down),
+                  ],
+                  const SizedBox(height: 30),
+                  ElevatedButton(
+                    onPressed: _register,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 15),
+                      backgroundColor: const Color(0xFF149393),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(30),
+                      ),
+                    ),
+                    child: const Text(
+                      'Registrar',
+                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                  ),
+                ]
+              ],
+            ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(TextEditingController controller, String label, IconData icon,
+      {bool obscureText = false, VoidCallback? onTap, bool readOnly = false}) {
+    return TextField(
+      controller: controller,
+      obscureText: obscureText,
+      readOnly: readOnly,
+      onTap: onTap,
+      decoration: InputDecoration(
+        labelText: label,
+        filled: true,
+        fillColor: Colors.white,
+        prefixIcon: Icon(icon, color: const Color(0xFF149393)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: const BorderSide(color: Color(0xFF149393)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(20),
+          borderSide: const BorderSide(color: Color(0xFF149393), width: 2),
+        ),
+        contentPadding: const EdgeInsets.symmetric(vertical: 15, horizontal: 20),
       ),
     );
   }

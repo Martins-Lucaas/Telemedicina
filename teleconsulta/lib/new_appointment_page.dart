@@ -18,8 +18,8 @@ class _NewAppointmentPageState extends State<NewAppointmentPage> {
   String _patientName = 'Nome completo do paciente';
   String _selectedDoctorId = '';
   Map<String, dynamic> _doctorSchedules = {}; // Armazena horários disponíveis por médico
-  List<Map<String, String>> _doctorList = []; // Lista de médicos pré-carregada
-  Map<String, dynamic> _doctorMap = {}; // Dados dos médicos pré-carregados
+  final List<Map<String, String>> _doctorList = []; // Lista de médicos pré-carregada
+  final Map<String, dynamic> _doctorMap = {}; // Dados dos médicos pré-carregados
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final DatabaseReference _databaseReference = FirebaseDatabase.instance.ref();
@@ -151,7 +151,7 @@ class _NewAppointmentPageState extends State<NewAppointmentPage> {
     if (_selectedDoctorId.isEmpty) {
       // Mostrar uma mensagem se nenhum médico foi selecionado
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Por favor, selecione um médico primeiro.')),
+        const SnackBar(content: Text('Por favor, selecione um médico primeiro.')),
       );
       return;
     }
@@ -171,7 +171,7 @@ class _NewAppointmentPageState extends State<NewAppointmentPage> {
 
             while (start.isBefore(end)) {
               availableSlots.add('$day - ${_formatTime(start)}');
-              start = start.add(Duration(hours: 1));
+              start = start.add(const Duration(hours: 1));
             }
           }
         }
@@ -216,12 +216,26 @@ class _NewAppointmentPageState extends State<NewAppointmentPage> {
     return '$hour:$minute';
   }
 
+  // Validação do número de telefone
+  bool _isPhoneValid(String phone) {
+    final phonePattern = RegExp(r'^[0-9]{10,11}$'); // Aceita números de 10 a 11 dígitos
+    return phonePattern.hasMatch(phone);
+  }
+
   Future<void> _saveAppointment() async {
     User? user = _auth.currentUser;
     if (user != null) {
       String specialty = _specialtyController.text.isNotEmpty ? _specialtyController.text : 'Especialidade não disponível';
       String date = _dateController.text.isNotEmpty ? _dateController.text : 'Data não selecionada';
       String phone = _phoneController.text;
+
+      // Validação do número de telefone
+      if (!_isPhoneValid(phone)) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Número de telefone inválido. Por favor, insira um número válido.')),
+        );
+        return;
+      }
 
       if (specialty.isNotEmpty && date.isNotEmpty && phone.isNotEmpty) {
         DatabaseReference consultationsRef = _databaseReference.child('users/patients').child(user.uid).child('consultations');
@@ -237,13 +251,13 @@ class _NewAppointmentPageState extends State<NewAppointmentPage> {
         _scheduleWhatsAppMessages(specialty, date);
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Agendamento confirmado com sucesso!')),
+          const SnackBar(content: Text('Agendamento confirmado com sucesso!')),
         );
 
         Navigator.pop(context);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Por favor, preencha todos os campos.')),
+          const SnackBar(content: Text('Por favor, preencha todos os campos.')),
         );
       }
     }
@@ -350,11 +364,11 @@ class _NewAppointmentPageState extends State<NewAppointmentPage> {
               ElevatedButton(
                 onPressed: _saveAppointment,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF149393), // Cor do botão
-                  padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-                  textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  backgroundColor: const Color(0xFF149393), // Cor do botão
+                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                  textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                child: Text('Confirmar Agendamento'),
+                child: const Text('Confirmar Agendamento'),
               ),
             ],
           ),
@@ -383,9 +397,9 @@ class _NewAppointmentPageState extends State<NewAppointmentPage> {
           children: [
             Text(
               _specialtyController.text.isEmpty ? 'Selecione a Especialidade' : _specialtyController.text,
-              style: TextStyle(fontSize: 16, color: Colors.black),
+              style: const TextStyle(fontSize: 16, color: Colors.black),
             ),
-            Icon(Icons.arrow_drop_down),
+            const Icon(Icons.arrow_drop_down),
           ],
         ),
       ),
@@ -412,9 +426,9 @@ class _NewAppointmentPageState extends State<NewAppointmentPage> {
           children: [
             Text(
               _convenio ?? 'Selecione o Convênio',
-              style: TextStyle(fontSize: 16, color: Colors.black),
+              style: const TextStyle(fontSize: 16, color: Colors.black),
             ),
-            Icon(Icons.arrow_drop_down),
+            const Icon(Icons.arrow_drop_down),
           ],
         ),
       ),
@@ -441,9 +455,9 @@ class _NewAppointmentPageState extends State<NewAppointmentPage> {
           children: [
             Text(
               _dateController.text.isEmpty ? 'Selecione a Data e Hora' : _dateController.text,
-              style: TextStyle(fontSize: 16, color: Colors.black),
+              style: const TextStyle(fontSize: 16, color: Colors.black),
             ),
-            Icon(Icons.arrow_drop_down),
+            const Icon(Icons.arrow_drop_down),
           ],
         ),
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:teleconsulta/PatientAccountPage.dart';
 import 'login_page.dart';
 import 'consultations_page.dart';
 
@@ -46,78 +47,131 @@ class _PatientPageState extends State<PatientPage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final int crossAxisCount = screenWidth < 600 ? 1 : screenWidth < 900 ? 2 : 3;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
-        elevation: 0,
+        elevation: 5,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: const Icon(Icons.logout, color: Color(0xFF149393)),
           onPressed: _logout,
         ),
-        actions: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 15),
-              decoration: BoxDecoration(
-                color: const Color(0xFF149393),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                children: [
-                  Text(
-                    _patientName,
-                    style: const TextStyle(color: Colors.white, fontSize: 16),
-                  ),
-                  const SizedBox(width: 10),
-                ],
-              ),
-            ),
+        title: Text(
+          _patientName,
+          style: const TextStyle(
+            color: Color(0xFF149393),
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
           ),
-        ],
+        ),
+        centerTitle: true,
       ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            _buildMenuButton('CONSULTAS'),
-            const SizedBox(height: 20),
-            _buildMenuButton('EXAMES E RECEITAS'),
-            const SizedBox(height: 20),
-            _buildMenuButton('MINHA CONTA'),
-          ],
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF149393), Color(0xFF0B6A69)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: GridView.builder(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              mainAxisSpacing: 20.0,
+              crossAxisSpacing: 20.0,
+              childAspectRatio: 1.2,
+            ),
+            itemCount: 3, // Quantidade de botões (3 no total)
+            itemBuilder: (context, index) {
+              switch (index) {
+                case 0:
+                  return _buildMenuButton(
+                    context,
+                    'CONSULTAS',
+                    Icons.event_note,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const ConsultationsPage()),
+                      );
+                    },
+                  );
+                case 1:
+                  return _buildMenuButton(
+                    context,
+                    'EXAMES E RECEITAS',
+                    Icons.medical_services,
+                    () {
+                      // Implemente a navegação para a página de Exames e Receitas
+                    },
+                  );
+                case 2:
+                  return _buildMenuButton(
+                    context,
+                    'MINHA CONTA',
+                    Icons.account_circle,
+                    () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const PatientAccountPage()),
+                      );
+                    },
+                  );
+                default:
+                  return Container();
+              }
+            },
+          ),
         ),
       ),
     );
   }
 
-  Widget _buildMenuButton(String text) {
-    return SizedBox(
-      width: 200,
-      height: 200,
-      child: ElevatedButton(
-        onPressed: () {
-          if (text == 'CONSULTAS') {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => const ConsultationsPage()),
-            );
-          }
-          // Adicione navegação para outras páginas aqui, se necessário.
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF149393),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(0),
-          ),
+  Widget _buildMenuButton(
+      BuildContext context, String title, IconData icon, VoidCallback onPressed) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Card(
+        elevation: 5,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(15.0),
         ),
-        child: Text(
-          text,
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
+        child: Container(
+          padding: const EdgeInsets.all(16.0),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(15.0),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                spreadRadius: 2,
+                blurRadius: 5,
+                offset: const Offset(0, 3),
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 40,
+                color: const Color(0xFF149393),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: Color(0xFF149393),
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
         ),
       ),

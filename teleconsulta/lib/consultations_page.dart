@@ -161,7 +161,7 @@ class _ConsultationsPageState extends State<ConsultationsPage> {
                       scrollDirection: Axis.horizontal,
                       child: DataTable(
                         columnSpacing: 30, // Espaçamento entre as colunas
-                        headingRowColor: MaterialStateColor.resolveWith((states) => const Color(0xFF149393)),
+                        headingRowColor: WidgetStateColor.resolveWith((states) => const Color(0xFF149393)),
                         columns: const [
                           DataColumn(
                             label: Text(

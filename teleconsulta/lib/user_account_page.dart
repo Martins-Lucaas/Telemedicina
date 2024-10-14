@@ -12,7 +12,7 @@ class UserAccountPage extends StatefulWidget {
 class _UserAccountPageState extends State<UserAccountPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final DatabaseReference _databaseReference = FirebaseDatabase.instance.ref();
-  Map<String, String> _userData = {
+  final Map<String, String> _userData = {
     'Nome Completo': 'Carregando...',
     'Email': 'Carregando...',
     'Data de Nascimento': 'Carregando...',
@@ -31,8 +31,8 @@ class _UserAccountPageState extends State<UserAccountPage> {
     'domingo': [],
   };
 
-  TextEditingController _startTimeController = TextEditingController();
-  TextEditingController _endTimeController = TextEditingController();
+  final TextEditingController _startTimeController = TextEditingController();
+  final TextEditingController _endTimeController = TextEditingController();
   String? _selectedDay;
   bool _willNotWork = false;
 
@@ -186,7 +186,7 @@ class _UserAccountPageState extends State<UserAccountPage> {
                     ),
                   ),
                 );
-              }).toList(),
+              }),
               const SizedBox(height: 20),
               // Disponibilidade semanal
               const Text(
@@ -263,7 +263,7 @@ class _UserAccountPageState extends State<UserAccountPage> {
               ElevatedButton(
                 onPressed: _addTimeSlot,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF149393),
+                  backgroundColor: const Color(0xFF149393),
                 ),
                 child: const Text('Adicionar Horário'),
               ),
@@ -302,12 +302,12 @@ class _UserAccountPageState extends State<UserAccountPage> {
                     ),
                   ),
                 );
-              }).toList(),
+              }),
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _saveAvailability,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF149393),
+                  backgroundColor: const Color(0xFF149393),
                 ),
                 child: const Text('Salvar Disponibilidade'),
               ),

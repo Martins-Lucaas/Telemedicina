@@ -32,19 +32,15 @@ class _LoginPageState extends State<LoginPage> {
       User? user = _auth.currentUser;
 
       if (user != null) {
-        // Verifica se o usuário é um paciente
         DatabaseReference patientRef = _databaseReference.child('users/patients').child(user.uid);
         DatabaseEvent event = await patientRef.once();
 
         if (event.snapshot.exists) {
-          // Redireciona para a página específica para pacientes
           Navigator.pushReplacement(
-            // ignore: use_build_context_synchronously
             context,
             MaterialPageRoute(builder: (context) => const PatientPage()),
           );
         } else {
-          // Redireciona para a página específica para médicos
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const DoctorPage()),
@@ -63,24 +59,19 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       body: LayoutBuilder(
         builder: (context, constraints) {
-          final screenWidth = constraints.maxWidth;
-          final screenHeight = constraints.maxHeight;
           const containerWidth = 500.0;
           const containerHeight = 50.0;
 
           return Stack(
             children: [
-              Positioned(
-                left: 0,
-                top: screenHeight * 0.5,
+              // Background gradient
+              Positioned.fill(
                 child: Container(
-                  width: screenWidth,
-                  height: screenHeight * 0.5,
                   decoration: const BoxDecoration(
-                    color: Color(0xFF149393),
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      topRight: Radius.circular(20),
+                    gradient: LinearGradient(
+                      colors: [Color(0xFF149393), Color(0xFF0B6D6D)],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
                     ),
                   ),
                 ),
@@ -99,20 +90,30 @@ class _LoginPageState extends State<LoginPage> {
                         width: 250.0,
                         padding: const EdgeInsets.symmetric(vertical: 15),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF149393),
+                          color: Colors.white.withOpacity(0.9),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              spreadRadius: 5,
+                              blurRadius: 10,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
                           borderRadius: BorderRadius.circular(20),
                         ),
                         alignment: Alignment.center,
                         child: const Text(
                           'SAÚDE +',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: Color(0xFF149393),
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
+                            letterSpacing: 2.0,
                           ),
                         ),
                       ),
                       const SizedBox(height: 40),
+                      // E-mail Field with Icon
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10),
                         width: containerWidth,
@@ -120,20 +121,33 @@ class _LoginPageState extends State<LoginPage> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: Colors.white,
-                            width: 2,
-                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              spreadRadius: 2,
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
                         ),
-                        child: TextField(
-                          controller: _emailController,
-                          decoration: const InputDecoration(
-                            hintText: 'Insira seu e-mail',
-                            border: InputBorder.none,
-                          ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.email, color: Color(0xFF149393)),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: TextField(
+                                controller: _emailController,
+                                decoration: const InputDecoration(
+                                  hintText: 'Insira seu e-mail',
+                                  border: InputBorder.none,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 20),
+                      // Password Field with Icon
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10),
                         width: containerWidth,
@@ -141,21 +155,34 @@ class _LoginPageState extends State<LoginPage> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(10),
-                          border: Border.all(
-                            color: Colors.white,
-                            width: 2,
-                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              spreadRadius: 2,
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
                         ),
-                        child: TextField(
-                          controller: _passwordController,
-                          decoration: const InputDecoration(
-                            hintText: 'Insira sua senha',
-                            border: InputBorder.none,
-                          ),
-                          obscureText: true,
+                        child: Row(
+                          children: [
+                            const Icon(Icons.lock, color: Color(0xFF149393)),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: TextField(
+                                controller: _passwordController,
+                                obscureText: true,
+                                decoration: const InputDecoration(
+                                  hintText: 'Insira sua senha',
+                                  border: InputBorder.none,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const SizedBox(height: 30),
+                      // Login Button with Hover and Press Effect
                       MouseRegion(
                         onEnter: (_) => setState(() => _isHoveringLogin = true),
                         onExit: (_) => setState(() => _isHoveringLogin = false),
@@ -170,12 +197,16 @@ class _LoginPageState extends State<LoginPage> {
                             width: _isPressedLogin ? containerWidth - 20 : containerWidth,
                             height: _isPressedLogin ? containerHeight - 5 : containerHeight,
                             decoration: BoxDecoration(
-                              color: _isHoveringLogin ? Colors.grey[300] : Colors.white,
+                              color: _isHoveringLogin ? Colors.white70 : Colors.white,
                               borderRadius: BorderRadius.circular(34),
-                              border: Border.all(
-                                color: Colors.white,
-                                width: 2,
-                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  spreadRadius: 2,
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
                             ),
                             alignment: Alignment.center,
                             child: const Text(
@@ -190,6 +221,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ),
                       const SizedBox(height: 20),
+                      // Register Button with Hover and Press Effect
                       MouseRegion(
                         onEnter: (_) => setState(() => _isHoveringRegister = true),
                         onExit: (_) => setState(() => _isHoveringRegister = false),
@@ -199,7 +231,7 @@ class _LoginPageState extends State<LoginPage> {
                             setState(() => _isPressedRegister = false);
                             Navigator.push(
                               context,
-                              MaterialPageRoute(builder: (context) => const RegisterPage()), // Navega para a página de registro
+                              MaterialPageRoute(builder: (context) => const RegisterPage()),
                             );
                           },
                           child: AnimatedContainer(
@@ -207,12 +239,16 @@ class _LoginPageState extends State<LoginPage> {
                             width: _isPressedRegister ? containerWidth - 20 : containerWidth,
                             height: _isPressedRegister ? containerHeight - 5 : containerHeight,
                             decoration: BoxDecoration(
-                              color: _isHoveringRegister ? Colors.grey[300] : Colors.white,
+                              color: _isHoveringRegister ? Colors.white70 : Colors.white,
                               borderRadius: BorderRadius.circular(34),
-                              border: Border.all(
-                                color: Colors.white,
-                                width: 2,
-                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  spreadRadius: 2,
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
                             ),
                             alignment: Alignment.center,
                             child: const Text(

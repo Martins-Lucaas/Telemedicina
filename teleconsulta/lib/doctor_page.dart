@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'login_page.dart';
 import 'user_account_page.dart';
+import 'prontuario_page.dart'; // Importe a nova página de prontuário
 
 class DoctorPage extends StatefulWidget {
   const DoctorPage({super.key});
@@ -121,8 +122,18 @@ class _DoctorPageState extends State<DoctorPage> {
     );
   }
 
+  void _navigateToProntuarioPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ProntuarioPage()), // Navega para a página de Prontuário
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final int crossAxisCount = screenWidth < 600 ? 1 : screenWidth < 900 ? 2 : 3;
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -164,21 +175,59 @@ class _DoctorPageState extends State<DoctorPage> {
         ),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
-          child: GridView.count(
-            crossAxisCount: 2,
-            mainAxisSpacing: 20.0,
-            crossAxisSpacing: 20.0,
-            padding: const EdgeInsets.all(20.0),
-            children: [
-              _buildMenuButton(context, 'MINHA CONTA', Icons.account_circle, _navigateToUserAccountPage),
-              _buildMenuButton(context, 'CONSULTAS AGENDADAS', Icons.event_note, _showConsultationsPopup),
-              _buildMenuButton(context, 'SOLICITAR EXAMES', Icons.medical_services, () {
-                // Implemente a navegação para a página "Solicitar Exames"
-              }),
-              _buildMenuButton(context, 'RECEITAS', Icons.receipt, () {
-                // Implemente a navegação para a página "Receitas"
-              }),
-            ],
+          child: GridView.builder(
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              mainAxisSpacing: 20.0,
+              crossAxisSpacing: 20.0,
+              childAspectRatio: 1.2,
+            ),
+            itemCount: 5, // Atualize o número de botões para incluir o novo botão de prontuário
+            itemBuilder: (context, index) {
+              switch (index) {
+                case 0:
+                  return _buildMenuButton(
+                    context,
+                    'MINHA CONTA',
+                    Icons.account_circle,
+                    _navigateToUserAccountPage,
+                  );
+                case 1:
+                  return _buildMenuButton(
+                    context,
+                    'CONSULTAS AGENDADAS',
+                    Icons.event_note,
+                    _showConsultationsPopup,
+                  );
+                case 2:
+                  return _buildMenuButton(
+                    context,
+                    'SOLICITAR EXAMES',
+                    Icons.medical_services,
+                    () {
+                      // Implemente a navegação para a página "Solicitar Exames"
+                    },
+                  );
+                case 3:
+                  return _buildMenuButton(
+                    context,
+                    'RECEITAS',
+                    Icons.receipt,
+                    () {
+                      // Implemente a navegação para a página "Receitas"
+                    },
+                  );
+                case 4:
+                  return _buildMenuButton(
+                    context,
+                    'PRONTUÁRIO',
+                    Icons.assignment,
+                    _navigateToProntuarioPage, // Navega para a página de Prontuário
+                  );
+                default:
+                  return Container();
+              }
+            },
           ),
         ),
       ),
@@ -212,7 +261,7 @@ class _DoctorPageState extends State<DoctorPage> {
               Icon(
                 icon,
                 size: 40,
-                color: Color(0xFF149393),
+                color: const Color(0xFF149393),
               ),
               const SizedBox(height: 10),
               Text(
