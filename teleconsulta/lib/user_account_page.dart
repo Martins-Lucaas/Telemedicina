@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:table_calendar/table_calendar.dart';
 
 class UserAccountPage extends StatefulWidget {
   const UserAccountPage({super.key});
@@ -20,21 +21,12 @@ class _UserAccountPageState extends State<UserAccountPage> {
     'Especialidade': 'Carregando...',
   };
 
-  // Disponibilidade semanal
-  Map<String, List<String>> _availability = {
-    'segunda-feira': [],
-    'terça-feira': [],
-    'quarta-feira': [],
-    'quinta-feira': [],
-    'sexta-feira': [],
-    'sábado': [],
-    'domingo': [],
-  };
+  // Disponibilidade mensal
+  Map<DateTime, List<String>> _availability = {};
 
   final TextEditingController _startTimeController = TextEditingController();
   final TextEditingController _endTimeController = TextEditingController();
-  String? _selectedDay;
-  bool _willNotWork = false;
+  DateTime? _selectedDay;
 
   @override
   void initState() {
@@ -64,12 +56,13 @@ class _UserAccountPageState extends State<UserAccountPage> {
     User? user = _auth.currentUser;
     if (user != null) {
       DatabaseReference availabilityRef =
-          _databaseReference.child('users/doctors').child(user.uid).child('disponibilidade');
+          _databaseReference.child('users/doctors').child(user.uid).child('disponibilidadeMensal');
       final snapshot = await availabilityRef.get();
       if (snapshot.exists) {
         Map<String, dynamic> availabilityData = Map<String, dynamic>.from(snapshot.value as Map);
         setState(() {
-          _availability = availabilityData.map((key, value) => MapEntry(key, List<String>.from(value)));
+          _availability = availabilityData.map((key, value) =>
+              MapEntry(DateTime.parse(key), List<String>.from(value)));
         });
       }
     }
@@ -79,11 +72,23 @@ class _UserAccountPageState extends State<UserAccountPage> {
     User? user = _auth.currentUser;
     if (user != null) {
       DatabaseReference availabilityRef =
-          _databaseReference.child('users/doctors').child(user.uid).child('disponibilidade');
-      await availabilityRef.set(_availability);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Disponibilidade salva com sucesso!')),
-      );
+          _databaseReference.child('users/doctors').child(user.uid).child('disponibilidadeMensal');
+      final formattedAvailability = _availability.map((key, value) {
+        // Formatar a chave como uma string segura
+        String safeKey = '${key.year}${key.month.toString().padLeft(2, '0')}${key.day.toString().padLeft(2, '0')}';
+        return MapEntry(safeKey, value);
+      });
+
+      try {
+        await availabilityRef.set(formattedAvailability);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Disponibilidade mensal salva com sucesso!')),
+        );
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Erro ao salvar a disponibilidade: $e')),
+        );
+      }
     }
   }
 
@@ -107,20 +112,21 @@ class _UserAccountPageState extends State<UserAccountPage> {
   }
 
   void _addTimeSlot() {
-    if (_selectedDay != null) {
+    if (_selectedDay != null && _startTimeController.text.isNotEmpty && _endTimeController.text.isNotEmpty) {
       setState(() {
-        if (_willNotWork) {
-          // Se a opção "não trabalhará" estiver marcada
-          _availability[_selectedDay!] = ["Não trabalhará"];
+        String timeSlot = '${_startTimeController.text} - ${_endTimeController.text}';
+        if (_availability.containsKey(_selectedDay)) {
+          _availability[_selectedDay]!.add(timeSlot);
         } else {
-          // Caso contrário, adicione o horário selecionado
-          String timeSlot = '${_startTimeController.text} - ${_endTimeController.text}';
-          _availability[_selectedDay!]!.add(timeSlot);
+          _availability[_selectedDay!] = [timeSlot];
         }
       });
       _startTimeController.clear();
       _endTimeController.clear();
-      _willNotWork = false; // Resetar a opção
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, selecione uma data e insira os horários de início e término.')),
+      );
     }
   }
 
@@ -188,9 +194,9 @@ class _UserAccountPageState extends State<UserAccountPage> {
                 );
               }),
               const SizedBox(height: 20),
-              // Disponibilidade semanal
+              // Disponibilidade mensal
               const Text(
-                'Definir Disponibilidade Semanal',
+                'Definir Disponibilidade Mensal',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
@@ -198,67 +204,112 @@ class _UserAccountPageState extends State<UserAccountPage> {
                 ),
               ),
               const SizedBox(height: 10),
-              DropdownButtonFormField<String>(
-                value: _selectedDay,
-                hint: const Text('Selecione um dia da semana'),
-                onChanged: (String? newValue) {
+              TableCalendar(
+                firstDay: DateTime.utc(2023, 1, 1),
+                lastDay: DateTime.utc(2025, 12, 31),
+                focusedDay: DateTime.now(),
+                selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                onDaySelected: (selectedDay, focusedDay) {
                   setState(() {
-                    _selectedDay = newValue;
-                    _willNotWork = false; // Resetar o checkbox ao mudar de dia
+                    _selectedDay = selectedDay;
                   });
                 },
-                items: _availability.keys.map((String day) {
-                  return DropdownMenuItem<String>(
-                    value: day,
-                    child: Text(day),
-                  );
-                }).toList(),
+                calendarStyle: CalendarStyle(
+                  todayDecoration: const BoxDecoration(
+                    color: Colors.orangeAccent,
+                    shape: BoxShape.circle,
+                  ),
+                  selectedDecoration: BoxDecoration(
+                    color: const Color(0xFF149393),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  weekendTextStyle: const TextStyle(
+                    color: Colors.redAccent,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  defaultTextStyle: const TextStyle(
+                    color: Colors.white,
+                  ),
+                  outsideTextStyle: const TextStyle(
+                    color: Colors.grey,
+                  ),
+                  holidayTextStyle: const TextStyle(
+                    color: Colors.blueAccent,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  todayTextStyle: const TextStyle(
+                    color: Colors.black,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  markersAutoAligned: true,
+                  markersMaxCount: 3,
+                  markerDecoration: const BoxDecoration(
+                    color: Colors.deepOrange,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                headerStyle: HeaderStyle(
+                  titleTextStyle: const TextStyle(
+                    fontSize: 20,
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  formatButtonVisible: false,
+                  titleCentered: true,
+                  leftChevronIcon: const Icon(
+                    Icons.chevron_left,
+                    color: Colors.white,
+                  ),
+                  rightChevronIcon: const Icon(
+                    Icons.chevron_right,
+                    color: Colors.white,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF149393),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                daysOfWeekStyle: const DaysOfWeekStyle(
+                  weekdayStyle: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                  weekendStyle: TextStyle(
+                    color: Colors.redAccent,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
+
               const SizedBox(height: 10),
-              // Checkbox para "Não trabalhará"
               Row(
                 children: [
-                  Checkbox(
-                    value: _willNotWork,
-                    onChanged: (bool? value) {
-                      setState(() {
-                        _willNotWork = value ?? false;
-                      });
-                    },
+                  Expanded(
+                    child: TextField(
+                      controller: _startTimeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Hora de Início',
+                        suffixIcon: Icon(Icons.access_time),
+                      ),
+                      readOnly: true,
+                      onTap: () => _selectTime(_startTimeController),
+                    ),
                   ),
-                  const Text('Não trabalhará nesse dia'),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: TextField(
+                      controller: _endTimeController,
+                      decoration: const InputDecoration(
+                        labelText: 'Hora de Término',
+                        suffixIcon: Icon(Icons.access_time),
+                      ),
+                      readOnly: true,
+                      onTap: () => _selectTime(_endTimeController),
+                    ),
+                  ),
                 ],
               ),
-              if (!_willNotWork) ...[
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _startTimeController,
-                        decoration: const InputDecoration(
-                          labelText: 'Hora de Início',
-                          suffixIcon: Icon(Icons.access_time),
-                        ),
-                        readOnly: true,
-                        onTap: () => _selectTime(_startTimeController),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: TextField(
-                        controller: _endTimeController,
-                        decoration: const InputDecoration(
-                          labelText: 'Hora de Término',
-                          suffixIcon: Icon(Icons.access_time),
-                        ),
-                        readOnly: true,
-                        onTap: () => _selectTime(_endTimeController),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
               const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _addTimeSlot,
@@ -286,7 +337,7 @@ class _UserAccountPageState extends State<UserAccountPage> {
                   ),
                   child: ListTile(
                     title: Text(
-                      entry.key,
+                      '${entry.key.day}/${entry.key.month}/${entry.key.year}',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 18,

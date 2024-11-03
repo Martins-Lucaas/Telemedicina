@@ -29,7 +29,6 @@ class _NewAppointmentPageState extends State<NewAppointmentPage> {
   Color _dateButtonColor = Colors.white; // Cor inicial do botão de data
   Color _convenioButtonColor = Colors.white; // Cor inicial do botão de convênio
 
-  // List of available "convênio" options
   final List<String> _convenioOptions = ['Nenhum', 'Plano A', 'Plano B', 'Plano C'];
 
   @override
@@ -74,7 +73,7 @@ class _NewAppointmentPageState extends State<NewAppointmentPage> {
           'nomeCompleto': value['nomeCompleto']?.toString() ?? 'Nome não disponível',
           'especialidade': value['especialidade']?.toString() ?? 'Especialidade não disponível',
         });
-        _doctorMap[key] = Map<String, dynamic>.from(value['disponibilidade'] ?? {}); // Puxa a disponibilidade do médico
+        _doctorMap[key] = Map<String, dynamic>.from(value['disponibilidadeMensal'] ?? {}); // Puxa a disponibilidade do médico
       });
 
       setState(() {}); // Atualizar o estado após carregar os dados
@@ -178,29 +177,63 @@ class _NewAppointmentPageState extends State<NewAppointmentPage> {
       }
     });
 
-    // Exibir horários disponíveis para seleção
-    String? selectedDateTime = await showDialog<String>(
+    if (availableSlots.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Nenhum horário disponível para o médico selecionado.')),
+      );
+      return;
+    }
+
+    // Exibir horários em um modal mais moderno
+    showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (BuildContext context) {
-        return SimpleDialog(
-          title: const Text('Selecione um Horário'),
-          children: availableSlots.map((slot) {
-            return SimpleDialogOption(
-              onPressed: () {
-                Navigator.pop(context, slot);
-              },
-              child: Text(slot),
-            );
-          }).toList(),
+        return Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Selecione um Horário Disponível',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 10),
+              SizedBox(
+                height: 300,
+                child: ListView.builder(
+                  itemCount: availableSlots.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    return ListTile(
+                      title: Text(availableSlots[index]),
+                      onTap: () {
+                        setState(() {
+                          _dateController.text = availableSlots[index];
+                        });
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 10),
+              ElevatedButton(
+                onPressed: () => Navigator.pop(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF149393),
+                  padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 15),
+                  textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                child: const Text('Fechar'),
+              ),
+            ],
+          ),
         );
       },
     );
-
-    if (selectedDateTime != null) {
-      setState(() {
-        _dateController.text = selectedDateTime;
-      });
-    }
   }
 
   DateTime _parseTime(String time) {
