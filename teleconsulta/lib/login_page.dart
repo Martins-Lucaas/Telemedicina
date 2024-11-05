@@ -32,20 +32,36 @@ class _LoginPageState extends State<LoginPage> {
       User? user = _auth.currentUser;
 
       if (user != null) {
-        DatabaseReference patientRef = _databaseReference.child('users/patients').child(user.uid);
-        DatabaseEvent event = await patientRef.once();
+        // Verificar se o usuário é médico
+        DatabaseReference doctorRef = _databaseReference.child('users/doctors').child(user.uid);
+        DatabaseEvent doctorEvent = await doctorRef.once();
 
-        if (event.snapshot.exists) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => const PatientPage()),
-          );
-        } else {
+        if (doctorEvent.snapshot.exists) {
+          // Redirecionar para a página do médico
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => const DoctorPage()),
           );
+          return; // Finaliza a execução caso seja um médico
         }
+
+        // Verificar se o usuário é paciente
+        DatabaseReference patientRef = _databaseReference.child('users/patients').child(user.uid);
+        DatabaseEvent patientEvent = await patientRef.once();
+
+        if (patientEvent.snapshot.exists) {
+          // Redirecionar para a página do paciente
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const PatientPage()),
+          );
+          return; // Finaliza a execução caso seja um paciente
+        }
+
+        // Se o tipo de usuário não for encontrado
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tipo de usuário não reconhecido.')),
+        );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

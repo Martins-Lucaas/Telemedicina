@@ -4,6 +4,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:teleconsulta/PatientAccountPage.dart';
 import 'login_page.dart';
 import 'consultations_page.dart';
+import 'ConsultationHistoryPage.dart'; // Importe a página de histórico de consultas
 
 class PatientPage extends StatefulWidget {
   const PatientPage({super.key});
@@ -106,7 +107,10 @@ class _PatientPageState extends State<PatientPage> {
                     'EXAMES E RECEITAS',
                     Icons.medical_services,
                     () {
-                      // Implemente a navegação para a página de Exames e Receitas
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const ConsultationHistoryPage()),
+                      );
                     },
                   );
                 case 2:

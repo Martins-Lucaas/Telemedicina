@@ -1,43 +1,37 @@
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_database/firebase_database.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 class WhatsAppHelper {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final DatabaseReference _databaseReference = FirebaseDatabase.instance.ref();
+  final String accessToken = 'EAAZADl1dPmS8BO0EVu3LndbRvwQ4nfbaRa4ERyED664u4wjSh5sxQHEncX3TOIdDwKqFV6Rd6VxZBLR2Is7msoHufH3TyCF6MgdWNhy89wzjLAPTXvZBfp0govy1dEZAEDGok2MuTmEYVrtmhcC8J61McpuJE5pDFh4qd0ISPn1zKp155I0nZAiFVKJcenZB3p';
+  final String fromPhoneNumberId = '470750332779819'; // ID do número de telefone registrado
 
-  Future<void> sendWhatsAppMessage(String phoneNumber, String message) async {
-    String url = 'https://wa.me/$phoneNumber?text=${Uri.encodeFull(message)}';
-    if (await canLaunch(url)) {
-      await launch(url);
+  Future<void> sendTemplateMessage(String recipientNumber) async {
+    final Uri url = Uri.parse('https://graph.facebook.com/v20.0/$fromPhoneNumberId/messages');
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Authorization': 'Bearer $accessToken',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'messaging_product': 'whatsapp',
+        'to': recipientNumber,
+        'type': 'template',
+        'template': {
+          'name': 'hello_world', // Nome do template aprovado
+          'language': {
+            'code': 'en_US', // Idioma do template, conforme mostrado na imagem
+          },
+        },
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      print('Template message sent successfully!');
     } else {
-      throw 'Could not launch $url';
+      print('Failed to send template message. Status code: ${response.statusCode}');
+      print('Response body: ${response.body}');
     }
-  }
-
-  void scheduleMessagesForConsultation(String consultationId, String phoneNumber, String specialty, String date, String time) {
-    // Mensagem para quando a consulta é agendada
-    sendWhatsAppMessage(phoneNumber, 'Sua consulta em $specialty foi agendada para o dia $date às $time.');
-
-    // Data e hora da consulta
-    DateTime consultationDateTime = DateTime.parse('$date $time');
-
-    // Um dia antes da consulta
-    DateTime oneDayBefore = consultationDateTime.subtract(const Duration(days: 1));
-    _scheduleNotification(oneDayBefore, phoneNumber, 'Lembrete: Sua consulta em $specialty é amanhã às $time.');
-
-    // Uma hora antes da consulta
-    DateTime oneHourBefore = consultationDateTime.subtract(const Duration(hours: 1));
-    _scheduleNotification(oneHourBefore, phoneNumber, 'Lembrete: Sua consulta em $specialty é em uma hora, às $time.');
-  }
-
-  void _scheduleNotification(DateTime scheduledTime, String phoneNumber, String message) {
-    // Para simplificação, use a função Future.delayed apenas como demonstração
-    Duration delay = scheduledTime.difference(DateTime.now());
-    if (delay.isNegative) return; // Não agende se a data/hora já passou
-
-    Future.delayed(delay, () {
-      sendWhatsAppMessage(phoneNumber, message);
-    });
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:teleconsulta/SolicitarExamesPage.dart';
 import 'login_page.dart';
 import 'user_account_page.dart';
 import 'prontuario_page.dart'; // Importe a nova página de prontuário
@@ -205,9 +206,13 @@ class _DoctorPageState extends State<DoctorPage> {
                     'SOLICITAR EXAMES',
                     Icons.medical_services,
                     () {
-                      // Implemente a navegação para a página "Solicitar Exames"
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const SolicitarExamesPage()),
+                      );
                     },
                   );
+
                 case 3:
                   return _buildMenuButton(
                     context,

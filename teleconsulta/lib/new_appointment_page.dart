@@ -60,7 +60,6 @@ class _NewAppointmentPageState extends State<NewAppointmentPage> {
   }
 
   Future<void> _loadDoctorData() async {
-    // Buscar especialidades e horários disponíveis dos médicos no banco de dados
     DatabaseReference doctorsRef = _databaseReference.child('users/doctors');
     final snapshot = await doctorsRef.get();
 
@@ -73,11 +72,88 @@ class _NewAppointmentPageState extends State<NewAppointmentPage> {
           'nomeCompleto': value['nomeCompleto']?.toString() ?? 'Nome não disponível',
           'especialidade': value['especialidade']?.toString() ?? 'Especialidade não disponível',
         });
-        _doctorMap[key] = Map<String, dynamic>.from(value['disponibilidadeMensal'] ?? {}); // Puxa a disponibilidade do médico
+        _doctorMap[key] = Map<String, dynamic>.from(value['disponibilidadeMensal'] ?? {});
       });
+
+      // Verificar consultas já agendadas e remover apenas horários indisponíveis
+      DatabaseReference appointmentsRef = _databaseReference.child('users/patients');
+      final appointmentsSnapshot = await appointmentsRef.get();
+
+      if (appointmentsSnapshot.exists) {
+        for (var patientSnapshot in appointmentsSnapshot.children) {
+          if (patientSnapshot.child('consultations').exists) {
+            patientSnapshot.child('consultations').children.forEach((consultationSnapshot) {
+              String? doctorId = consultationSnapshot.child('doctorId').value?.toString();
+              String? reservedDateTime = consultationSnapshot.child('date').value?.toString(); // Data e hora reservadas
+
+              if (doctorId != null && reservedDateTime != null && _doctorMap.containsKey(doctorId)) {
+                // Extrair a data e a hora separadamente
+                String reservedDate = reservedDateTime.split(' - ')[0]; // yyyyMMdd
+                String reservedTime = reservedDateTime.split(' - ')[1]; // HH:mm
+
+                if (_doctorMap[doctorId].containsKey(reservedDate)) {
+                  List slots = _doctorMap[doctorId][reservedDate];
+                  for (int i = 0; i < slots.length; i++) {
+                    String slot = slots[i];
+                    List<String> timeRange = slot.split(' - ');
+                    if (timeRange.length == 2) {
+                      String startTime = timeRange[0];
+                      String endTime = timeRange[1];
+
+                      // Verifica se o horário reservado está dentro do intervalo
+                      if (reservedTime == startTime) {
+                        // Remove o horário exato do início
+                        slots.removeAt(i);
+                        break;
+                      } else if (reservedTime == endTime) {
+                        // Ajusta o horário de fim do intervalo
+                        slots[i] = '$startTime - ${_subtractMinute(reservedTime)}';
+                        break;
+                      } else if (_isTimeInRange(reservedTime, startTime, endTime)) {
+                        // Divide o intervalo em dois se o horário estiver no meio
+                        slots[i] = '$startTime - ${_subtractMinute(reservedTime)}';
+                        slots.insert(i + 1, '${_addMinute(reservedTime)} - $endTime');
+                        break;
+                      }
+                    }
+                  }
+                                }
+              }
+            });
+          }
+        }
+      }
 
       setState(() {}); // Atualizar o estado após carregar os dados
     }
+  }
+
+  bool _isTimeInRange(String time, String start, String end) {
+    DateTime parsedTime = _parseTime(time);
+    DateTime parsedStart = _parseTime(start);
+    DateTime parsedEnd = _parseTime(end);
+    return parsedTime.isAfter(parsedStart) && parsedTime.isBefore(parsedEnd);
+  }
+
+  DateTime _parseTime(String time) {
+    List<String> timeParts = time.split(':');
+    return DateTime(0, 1, 1, int.parse(timeParts[0]), int.parse(timeParts[1]));
+  }
+
+  String _subtractMinute(String time) {
+    DateTime parsedTime = _parseTime(time).subtract(const Duration(minutes: 1));
+    return _formatTime(parsedTime);
+  }
+
+  String _addMinute(String time) {
+    DateTime parsedTime = _parseTime(time).add(const Duration(minutes: 1));
+    return _formatTime(parsedTime);
+  }
+
+  String _formatTime(DateTime time) {
+    String hour = time.hour.toString().padLeft(2, '0');
+    String minute = time.minute.toString().padLeft(2, '0');
+    return '$hour:$minute';
   }
 
   Future<void> _selectConvenio() async {
@@ -236,19 +312,6 @@ class _NewAppointmentPageState extends State<NewAppointmentPage> {
     );
   }
 
-  DateTime _parseTime(String time) {
-    final timeParts = time.split(':');
-    int hour = int.parse(timeParts[0]);
-    int minute = int.parse(timeParts[1]);
-    return DateTime(0, 1, 1, hour, minute);
-  }
-
-  String _formatTime(DateTime time) {
-    String hour = time.hour.toString().padLeft(2, '0');
-    String minute = time.minute.toString().padLeft(2, '0');
-    return '$hour:$minute';
-  }
-
   // Validação do número de telefone
   bool _isPhoneValid(String phone) {
     final phonePattern = RegExp(r'^[0-9]{10,11}$'); // Aceita números de 10 a 11 dígitos
@@ -279,6 +342,7 @@ class _NewAppointmentPageState extends State<NewAppointmentPage> {
           'date': date,
           'convenio': _convenio ?? 'Nenhum',
           'phone': phone,
+          'doctorId': _selectedDoctorId,
         });
 
         _scheduleWhatsAppMessages(specialty, date);
